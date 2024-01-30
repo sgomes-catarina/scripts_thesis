@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#SBATCH --output=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc/error/idat_to_gtc.log
+#SBATCH --error=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc/error/idat_to_gtc.err
+#SBATCH --job-name=gtc_to_vcf
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=20
+#SBATCH --mem=24G
+#SBATCH --partition=hc
+#SBATCH --nodelist=node04
+
+# Configura bibliotecas para uso do conda
+source /opt/miniconda/etc/profile.d/conda.sh
+
+# Ativa ambiente conda
+conda activate bio
+
+# Configura variaveis
+bpm_manifest_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.bpm"
+egt_cluster_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1_ClusterFile.egt"
+csv_manifest_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.csv"
+bam_alignment_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.bam"
+
+path_to_gtc_folder="/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc"
+path_to_output_folder="/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/02_gtc_to_vcf/"
+ref="/mnt/p2000/data4/projects/catarina/illumina_gda/ref/hg37/human_g1k_v37.fasta"
+out_prefix="ROC_GDA-8v1-0_D1_multisample_gtc2vcf"
+LANG="en_US.UTF-8" 
+
+cd $path_to_output_folder
+
+# Call bcftools gtc to vcf
+bcftools +gtc2vcf \
+   --no-version -Ou \
+   --bpm $bpm_manifest_file \
+   --csv $csv_manifest_file \
+   --egt $egt_cluster_file \
+   --gtcs $path_to_gtc_folder \
+   --fasta-ref $ref \
+   --extra $out_prefix.tsv | \
+   bcftools sort -Ob -o $out_prefix.bcf -T ./bcftools.
+

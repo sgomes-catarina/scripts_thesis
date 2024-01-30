@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#SBATCH --output=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/align_manifest.log
+#SBATCH --error=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/align_manifest.err
+#SBATCH --job-name=align_manifest
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=20
+#SBATCH --mem=24G
+#SBATCH --partition=hc
+#SBATCH --nodelist=node04
+
+# Configura bibliotecas para uso do conda
+source /opt/miniconda/etc/profile.d/conda.sh
+
+# Ativa ambiente conda
+conda activate bio
+
+# Configura variaveis
+csv_manifest_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.csv"
+ref="/mnt/p2000/data4/projects/catarina/illumina_gda/ref/hg38/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
+path_to_output_folder="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/"
+csv_manifest_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.csv"
+
+cd $path_to_output_folder
+
+# Call bcftools realign manifest file
+bcftools +gtc2vcf --csv $csv_manifest_file --fasta-flank -o GDA-8v1-0_D1.fasta
+
+cd /mnt/p2000/data4/projects/catarina/illumina_gda/ref/hg38/
+
+bwa index GCA_000001405.15_GRCh38_no_alt_analysis_set.fna
+bwa mem -M GCA_000001405.15_GRCh38_no_alt_analysis_set.fna /mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.fasta -o GDA-8v1-0_D1.sam
+
+samtools view -S -b GDA-8v1-0_D1.sam -o GDA-8v1-0_D1.bam
+

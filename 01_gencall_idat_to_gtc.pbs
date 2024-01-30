@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#SBATCH --output=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc/error/idat_to_gtc.log
+#SBATCH --error=/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc/error/idat_to_gtc.err
+#SBATCH --job-name=idat_to_gtc
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --mem=24G
+#SBATCH --partition=hc
+#SBATCH --nodelist=node01
+
+# Configura bibliotecas para uso do conda
+source /opt/miniconda3/etc/profile.d/conda.sh
+
+# Ativa ambiente conda com R 3.6.1
+conda activate bio
+
+# Configura variaveis
+bpm_manifest_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1.bpm"
+egt_cluster_file="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/diag/GDA-8v1-0_D1_ClusterFile.egt"
+path_to_output_folder="/mnt/p2000/data4/projects/catarina/illumina_gda/intermediate/01_gencall_idat_to_gtc/"
+base_directory="/mnt/p2000/home/catarina/illumina_gda/raw/nov_2022_LTO/"
+
+LANG="en_US.UTF-8" 
+
+cd /mnt/p2000/data4/projects/catarina/illumina_gda/scripts/logs/
+ 
+# Use find to get a list of directories (excluding "diag")
+find "$base_directory" -maxdepth 1 -type d \( ! -path "$base_directory" -a ! -name "diag" \) -print0 |
+while IFS= read -r -d $'\0' path_to_idat_folder; do
+     # Call iaap-cli gencall for each subdirectory
+     iaap-cli gencall \
+        "$bpm_manifest_file" \
+         "$egt_cluster_file" \
+        "$path_to_output_folder" \
+         --idat-folder "$path_to_idat_folder" \
+         --output-gtc \
+         --gender-estimate-call-rate-threshold -0.1
+done
